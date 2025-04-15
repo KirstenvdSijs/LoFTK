@@ -99,19 +99,12 @@ else
     QUEUE_STAT_DESC=${QUEUE_STAT_DESC_CONFIG}
     VMEM_STAT_DESC=${VMEM_STAT_DESC_CONFIG}
 
-	
-
-    ### MAIL SETTINGS
-    EMAIL=${YOUREMAIL}
-    MAILTYPE=${MAILSETTINGS}
-
     ### PROJECT SPECIFIC
     ANALYSIS_TYPE=${ANALYSIS}
     ROOTDIR=${ROOTDIR} # the root directory, e.g. /hpc/dhl_ec/aalasiri/projects/test_lof
     PROJECTNAME=${PROJECTNAME} # e.g. "ukb"
     ENSEMBL=${ENSEMBL}
     LOFTK=${LOFTOOLKIT}
-	CONTAINER_PATH=${CONTAINER_PATH}
     USERNAME=$(whoami)
     PROB2VCF="probs_to_vcf_${PROJECTNAME}"
     VEP_ANNOTATION="VEP_${PROJECTNAME}_"
@@ -119,7 +112,7 @@ else
     OUTPUTDIR=${ROOTDIR}/${PROJECTNAME}_LoF_output
 	
 
-# if ANALYSIS_TYPE empity 
+# if ANALYSIS_TYPE empty 
     [[ ! -z "$ANALYSIS_TYPE" ]] && echo "" || ANALYSIS_TYPE="ALL" # set empity variable to default 'ALL'
 
     if [[ ${ANALYSIS_TYPE} == "ALL" ]] || [[ ${ANALYSIS_TYPE} == "VEPLOFTEE" ]]; then 
@@ -152,7 +145,7 @@ else
 		elif [ "$(ls -A ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr"$chr")" ]; then
 		    rm ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr"$chr"/*
 		else
-		    echoerrorflash "This directory was empity from the beginning: ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr"$chr". "
+		    echoerrorflash "This directory was empty from the beginning: ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr"$chr". "
 		fi
 		
 		PROJECTDIR=${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr"$chr"
@@ -183,8 +176,7 @@ else
 			echo ${c%%.vcf.gz}_${count}.sh
 			
 			echo "#!/bin/bash" > ${c%%.vcf.gz}_${count}.sh
-			echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${c%%.vcf.gz}_${count}.sh
-			echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${VEP} --input_file $c --output_file ${c%.gz}.vep.vcf.gz --vcf --compress_output gzip --offline --phased --assembly GRCh37 --protein --canonical -plugin LoF,loftee_path:${LOFTEE},human_ancestor_fa:${HUMAN_ANCESTOR_FA},conservation_file:${CONSERVATION_FILE} --dir_plugins ${LOFTEE} --cache --dir_cache ${CACHEDIR} -port 3337 --force_overwrite" >> ${c%%.vcf.gz}_${count}.sh
+			echo "${VEP} --input_file $c --output_file ${c%.gz}.vep.vcf.gz --vcf --compress_output gzip --offline --phased --assembly GRCh37 --protein --canonical -plugin LoF,loftee_path:${LOFTEE},human_ancestor_fa:${HUMAN_ANCESTOR_FA},conservation_file:${CONSERVATION_FILE} --dir_plugins ${LOFTEE} --cache --dir_cache ${CACHEDIR} -port 3337 --force_overwrite" >> ${c%%.vcf.gz}_${count}.sh
 #@#@VEPLOFTEEPONTER37
 
 			echo "rm $c " >> ${c%.vcf.gz}_${count}.sh
@@ -222,8 +214,8 @@ else
 			echo ${c%.vcf.gz}_${count}.sh
 
 			echo "#!/bin/bash" > ${c%%.vcf.gz}_${count}.sh
-			echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${c%%.vcf.gz}_${count}.sh
-			echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${VEP} --input_file $c --output_file ${c%.gz}.vep.vcf.gz --vcf --compress_output gzip --offline --phased --assembly GRCh38 --protein --canonical -plugin LoF,loftee_path:${LOFTEE},human_ancestor_fa:${HUMAN_ANCESTOR_FA},conservation_file:${CONSERVATION_FILE},gerp_bigwig:${GERP_BIGWIG} --dir_plugins ${LOFTEE} --cache --dir_cache ${CACHEDIR} --force_overwrite" >> ${c%.vcf.gz}_${count}.sh		    
+
+			echo "${VEP} --input_file $c --output_file ${c%.gz}.vep.vcf.gz --vcf --compress_output gzip --offline --phased --assembly GRCh38 --protein --canonical -plugin LoF,loftee_path:${LOFTEE},human_ancestor_fa:${HUMAN_ANCESTOR_FA},conservation_file:${CONSERVATION_FILE},gerp_bigwig:${GERP_BIGWIG} --dir_plugins ${LOFTEE} --cache --dir_cache ${CACHEDIR} --force_overwrite" >> ${c%.vcf.gz}_${count}.sh		    
 #@#@VEPLOFTEEPONTER38
 
 			echo "rm $c " >> ${c%.vcf.gz}_${count}.sh
@@ -267,17 +259,16 @@ else
 #### Genes containing LoF variants #####
 #======================================#
 	    echo "#!/bin/bash" > ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-		echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 #	    echo "mv ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr*/*vep.vcf.gz ${OUTPUTDIR}" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 
 	    if [ ${FILE_FORMAT} == "IMPUTE2" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_gene_lofs.pl ${OUTPUTDIR}
 		echo "sleep 15" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-		echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_gene_lofs.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+		echo "${PERL} /LoFTK/src/vep_vcf_to_gene_lofs.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 	    elif [ ${FILE_FORMAT} == "VCF" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_gene_lofs_vcf.pl ${OUTPUTDIR}
 		echo "sleep 15" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-		echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_gene_lofs_vcf.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+		echo "${PERL} /LoFTK/src/vep_vcf_to_gene_lofs_vcf.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 	    else
                 echoerrorflash "                        *** ERROR *** "
                 echoerrorflash "Something went wrong. You must have to set the FILE_FORMAT in LoF_config to either IMPUTE2 or VCF. "
@@ -285,8 +276,8 @@ else
                 exit 1
             fi
 
-		echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/gene_lofs_to_gene_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.counts" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-	    echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/gene_lofs_to_lof_snps.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.lof.snps" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+		echo "${PERL} /LoFTK/src/gene_lofs_to_gene_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.counts" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+	    echo "${PERL} /LoFTK/src/gene_lofs_to_lof_snps.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.lof.snps" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 	    
 	    VEPDEPENDACY=$(sacct --format="JobID,JobName%30,State" | awk -v vepann=${VEP_ANNOTATION} '$2 ~ vepann {print $0}' | awk '$3 == "RUNNING" || $3 == "PENDING" {print $1}' | ${TRANSPOSE} | sed 's/\t/,/g')
             echo "Job ID for LoF_gene_${PROJECTNAME}: ${VEPDEPENDACY}"
@@ -301,14 +292,13 @@ else
 #### LoF variants #####
 #=====================#
 	    echo "#!/bin/bash" > ${OUTPUTDIR}/run_vep_to_lof_snp.sh
-		echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 	    echo "sleep 50" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 	    if [ ${FILE_FORMAT} == "IMPUTE2" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_snp_lofs.pl ${OUTPUTDIR}
-		echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_snp_lofs.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+		echo "${PERL} /LoFTK/src/vep_vcf_to_snp_lofs.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 	    elif [ ${FILE_FORMAT} == "VCF" ]; then
                 cp ${LOFTK}/src/vep_vcf_to_snp_lofs_vcf.pl ${OUTPUTDIR}
-		echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_snp_lofs_vcf.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+		echo "${PERL} /LoFTK/src/vep_vcf_to_snp_lofs_vcf.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
             else
                 echoerrorflash "                        *** ERROR *** "
                 echoerrorflash "Something went wrong. You must have to set the FILE_FORMAT in LoF_config to either IMPUTE2 or VCF. "
@@ -316,13 +306,12 @@ else
                 exit 1
             fi
 
-	    echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/snp_lofs_to_snp_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_snp.lof ${OUTPUTDIR}/${PROJECTNAME}_snp.counts" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+	    echo "${PERL} /LoFTK/src/snp_lofs_to_snp_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_snp.lof ${OUTPUTDIR}/${PROJECTNAME}_snp.counts" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 
             VEPDEPENDACY=$(sacct --format="JobID,JobName%30,State" | awk -v vepann=${VEP_ANNOTATION} '$2 ~ vepann {print $0}' | awk '$3 == "RUNNING" || $3 == "PENDING" {print $1}' | ${TRANSPOSE} | sed 's/\t/,/g')
 	    echo "Job ID for LoF_snp_${PROJECTNAME}: ${VEPDEPENDACY}"
 	    
 	    if [ ${ANALYSIS_TYPE} == "LOFCALC" ]; then 
-		bash ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 		sbatch --job-name=LoF_snp_${PROJECTNAME} -e LoF_snp_${PROJECTNAME}.error -o LoF_snp_${PROJECTNAME}.log -t ${QUEUE_LOF_SNP} --mem=${VMEM_LOF_SNP} --mail-user=${EMAIL} --mail-type=${MAILTYPE} -D ${OUTPUTDIR} ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 	    else
 		${OUTPUTDIR}/run_vep_to_lof_snp.sh
@@ -337,17 +326,16 @@ else
 #======================================#
 	    echo "Collect high-confidence loss-of-function variants."
 	    echo "#!/bin/bash" > ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-		echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 #	    echo "mv ${ROOTDIR}/${PROJECTNAME}_Files_for_VCF_LoF/vcf_chr*/*vep.vcf.gz ${OUTPUTDIR}" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 	    echo "sleep 15" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 	    
 	    if [ ${FILE_FORMAT} == "IMPUTE2" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_gene_lofs.pl ${OUTPUTDIR}
 		
-                echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_gene_lofs.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+                echo "${PERL} /LoFTK/src/vep_vcf_to_gene_lofs.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
             elif [ ${FILE_FORMAT} == "VCF" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_gene_lofs_vcf.pl ${OUTPUTDIR}
-                echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_gene_lofs_vcf.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+                echo "${PERL} /LoFTK/src/vep_vcf_to_gene_lofs_vcf.pl -v -o ${PROJECTNAME}_gene.lof" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
             else
                 echoerrorflash "                        *** ERROR *** "
                 echoerrorflash "Something went wrong. You must have to set the FILE_FORMAT in LoF_config to either IMPUTE2 or VCF. "
@@ -355,8 +343,8 @@ else
                 exit 1
             fi
 
-            echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/gene_lofs_to_gene_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.counts" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
-            echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/gene_lofs_to_lof_snps.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.lof.snps" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+            echo "${PERL} /LoFTK/src/gene_lofs_to_gene_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.counts" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
+            echo "${PERL} /LoFTK/src/gene_lofs_to_lof_snps.pl ${OUTPUTDIR}/${PROJECTNAME}_gene.lof ${OUTPUTDIR}/${PROJECTNAME}_gene.lof.snps" >> ${OUTPUTDIR}/run_vep_to_lof_gene.sh
 
 	    VEPDEPENDACY=$(sacct --format="JobID,JobName%30,State" | awk -v vepann=${VEP_ANNOTATION} '$2 ~ vepann {print $0}' | awk '$3 == "RUNNING" || $3 == "PENDING" {print $1}' | ${TRANSPOSE} | sed 's/\t/,/g')
             echo "Job ID for LoF_gene_${PROJECTNAME}: ${VEPDEPENDACY}"
@@ -372,15 +360,14 @@ else
 #=====================#
 	    echo "Collect high-confidence loss-of-function variants."
 	    echo "#!/bin/bash" > ${OUTPUTDIR}/run_vep_to_lof_snp.sh
-		echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 	    echo "sleep 50" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 
 	    if [ ${FILE_FORMAT} == "IMPUTE2" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_snp_lofs.pl ${OUTPUTDIR}
-                echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_snp_lofs.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+                echo "${PERL} /LoFTK/src/vep_vcf_to_snp_lofs.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
             elif [ ${FILE_FORMAT} == "VCF" ]; then
 		cp ${LOFTK}/src/vep_vcf_to_snp_lofs_vcf.pl ${OUTPUTDIR}
-                echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} vep_vcf_to_snp_lofs_vcf.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+                echo "${PERL} /LoFTK/src/vep_vcf_to_snp_lofs_vcf.pl -v -o ${PROJECTNAME}_snp.lof" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
             else
                 echoerrorflash "                        *** ERROR *** "
                 echoerrorflash "Something went wrong. You must have to set the FILE_FORMAT in LoF_config to either IMPUTE2 or VCF. "
@@ -388,7 +375,7 @@ else
                 exit 1
             fi
 
-	    echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${PERL} ${LOFTK}/src/snp_lofs_to_snp_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_snp.lof ${OUTPUTDIR}/${PROJECTNAME}_snp.counts" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
+	    echo "${PERL} /LoFTK/src/snp_lofs_to_snp_lof_counts.pl ${OUTPUTDIR}/${PROJECTNAME}_snp.lof ${OUTPUTDIR}/${PROJECTNAME}_snp.counts" >> ${OUTPUTDIR}/run_vep_to_lof_snp.sh
 
 	    VEPDEPENDACY=$(sacct --format="JobID,JobName%30,State" | awk -v vepann=${VEP_ANNOTATION} '$2 ~ vepann {print $0}' | awk '$3 == "RUNNING" || $3 == "PENDING" {print $1}' | ${TRANSPOSE} | sed 's/\t/,/g')
             echo "Job ID for LoF_snp_${PROJECTNAME}: ${VEPDEPENDACY}"
@@ -419,9 +406,8 @@ else
 	LOF_GENE_ANNOTATION="LoF_gene_${PROJECTNAME}"
 	LOF_SNP_ANNOTATION="LoF_snp_${PROJECTNAME}"
 	echo "#!/bin/bash" > ${OUTPUTDIR}/stat_desc_${PROJECTNAME}.sh
-	echo "export CONTAINER_PATH=${CONTAINER_PATH}" >> ${OUTPUTDIR}/stat_desc_${PROJECTNAME}.sh
 	DIR_CONFG=$(realpath "$CONFIGURATIONFILE")
-	echo "singularity exec -B /hpc:/hpc ${CONTAINER_PATH} ${LOFTK}/stat_desc.sh ${DIR_CONFG}" >> ${OUTPUTDIR}/stat_desc_${PROJECTNAME}.sh
+	echo "${LOFTK}/stat_desc.sh ${DIR_CONFG}" >> ${OUTPUTDIR}/stat_desc_${PROJECTNAME}.sh
 
 	LOFDEPENDACY=$(squeue -u ${USERNAME} -n LoF_gene_${PROJECTNAME},LoF_snp_${PROJECTNAME} | tail -n +2 | awk '{print $1}' | ${TRANSPOSE} | sed 's/\t/,/g')
 

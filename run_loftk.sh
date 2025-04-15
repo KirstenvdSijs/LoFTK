@@ -100,10 +100,6 @@ else
     ### REQUIRED | GENERALS
     CONFIGURATIONFILE="$1" # Depends on arg1 -- but also on where it resides!!!
 
-    ### MAIL SETTINGS
-    #EMAIL=${YOUREMAIL}
-    #MAILTYPE=${MAILSETTINGS}
-
     ### PROJECT SPECIFIC
     ANALYSISTYPE=${ANALYSIS}
     ROOTDIR=${ROOTDIR} # the root directory, e.g. /hpc/dhl_ec/aalasiri/lof/Imputation/ukb_5K/Imputation
